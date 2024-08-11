@@ -33,7 +33,9 @@ def maybe_make_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-  class LinearModel:
+
+
+class LinearModel:
     def __init__(self, input_dim, n_action):
         self.W = np.random.randn(input_dim, n_action) / np.sqrt(input_dim)
         self.b = np.zeros(n_action)
@@ -72,6 +74,7 @@ def maybe_make_dir(directory):
     
     def save_weights(self, filepath):
         np.savez(filepath, W=self.W, b=self.b)
+        
 
 class MultiStockEnv:
     def __init__(self, data, initial_investment=20000):
