@@ -92,7 +92,6 @@ class MultiStockEnv:
         self.action_space = np.arange(3**self.n_stock)
         self.action_list = list(map(list, itertools.product([0, 1, 2], repeat=self.n_stock)))
     
-        # calculate size of state
         self.state_dim = self.n_stock * 2 + 1
     
         self.reset()
@@ -109,26 +108,19 @@ class MultiStockEnv:
     def step(self, action):
         prev_val = self._get_val()
     
-        # update price, i.e. go to the next day
         self.cur_step += 1
         self.stock_price = self.stock_price_history[self.cur_step]
     
-        # perform the trade
         self._trade(action)
     
-        # get the new value after taking the action
         cur_val = self._get_val()
     
-        # reward is the increase in porfolio value
         reward = cur_val - prev_val
     
-        # done if we have run out of data
         done = self.cur_step == self.n_step - 1
     
-        # store the current value of the portfolio here
         info = {'cur_val': cur_val}
 
-    # conform to the Gym API
         return self._get_obs(), reward, done, info
 
 
@@ -140,7 +132,6 @@ class MultiStockEnv:
         return obs
     
 
-
     def _get_val(self):
         return self.stock_owned.dot(self.stock_price) + self.cash_in_hand
 
@@ -148,25 +139,21 @@ class MultiStockEnv:
     def _trade(self, action):
         action_vec = self.action_list[action]
     
-        # determine which stocks to buy or sell
-        sell_index = [] # stores index of stocks we want to sell
-        buy_index = [] # stores index of stocks we want to buy
+        sell_index = [] # stores index of stocks I want to sell
+        buy_index = [] # stores index of stocks I want to buy
         for i, a in enumerate(action_vec):
           if a == 0:
             sell_index.append(i)
           elif a == 2:
             buy_index.append(i)
-    
-        # sell any stocks we want to sell
-        # then buy any stocks we want to buy
+
         if sell_index:
-          # NOTE: to simplify the problem, when we sell, we will sell ALL shares of that stock
+          #sell ALL shares of that stock
           for i in sell_index:
             self.cash_in_hand += self.stock_price[i] * self.stock_owned[i]
             self.stock_owned[i] = 0
         if buy_index:
-          # NOTE: when buying, we will loop through each stock we want to buy,
-          #       and buy one share at a time until we run out of cash
+          #When buying I will loop through each stock and buy one share at a time until we run out of cash
           can_buy = True
           while can_buy:
             for i in buy_index:
@@ -181,8 +168,8 @@ class DQNAgent(object):
     def __init__(self, state_size, action_size):
         self.state_size = state_size
         self.action_size = action_size
-        self.gamma = 0.95  # discount rate
-        self.epsilon = 1.0  # exploration rate
+        self.gamma = 0.95  
+        self.epsilon = 1.0  
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.model = LinearModel(state_size, action_size)
@@ -191,7 +178,7 @@ class DQNAgent(object):
         if np.random.rand() <= self.epsilon:
           return np.random.choice(self.action_size)
         act_values = self.model.predict(state)
-        return np.argmax(act_values[0])  # returns action
+        return np.argmax(act_values[0])  
 
     def train(self, state, action, reward, next_state, done):
         if done:
@@ -202,7 +189,6 @@ class DQNAgent(object):
         target_full = self.model.predict(state)
         target_full[0, action] = target
     
-        # Run one training step
         self.model.sgd(state, target_full)
     
         if self.epsilon > self.epsilon_min:
@@ -217,7 +203,6 @@ class DQNAgent(object):
         self.model.save_weights(name)
 
 def play_one_episode(agent, env, is_train):
-  # note: after transforming states are already 1xD
   state = env.reset()
   state = scaler.transform([state])
   done = False
@@ -235,7 +220,6 @@ def play_one_episode(agent, env, is_train):
 
 if __name__ == '__main__':
 
-    # config
     models_folder = 'linear_rl_trader_models'
     rewards_folder = 'linear_rl_trader_rewards'
     num_episodes = 2000
